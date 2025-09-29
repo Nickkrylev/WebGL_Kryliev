@@ -4,7 +4,8 @@ function deg2rad(angle) {
     return angle * Math.PI / 180;
 }
 
-
+// p: an array of xyz vertex coords
+// t: an array of uv tex coords
 function Vertex(p)
 {
     this.p = p;
@@ -21,7 +22,7 @@ function Triangle(v0, v1, v2)
     this.tangent = [];
 }
 
-// Constructor
+// Model Constructor function
 function Model(name) {
     this.name = name;
     this.iVertexBuffer = gl.createBuffer();
@@ -31,17 +32,21 @@ function Model(name) {
     this.BufferData = function(vertices, indices) {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STREAM_DRAW);
-        gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(shProgram.iAttribVertex);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.iIndexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STREAM_DRAW);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
         this.count = indices.length;
     }
 
     this.Draw = function() {
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.iVertexBuffer);
+        gl.vertexAttribPointer(shProgram.iAttribVertex, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(shProgram.iAttribVertex);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.iIndexBuffer);
 
         //gl.drawArrays(gl.LINE_STRIP, 0, this.count);
         gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
@@ -55,11 +60,13 @@ function CreateSurfaceData(data)
     let triangles = [];
 
     for (let i=0, ang = 0; i<72; i++, ang+=5) {
+        // TODO: replace with your equation
         vertices.push( new Vertex( [Math.sin(deg2rad(ang)), 0, Math.cos(deg2rad(ang))] ));
     }
 
     for (let i=0, ang = 0; i<72; i++, ang+=5) {
 
+        // TODO: replace with your equation
         let v0ind = vertices.length;
         vertices.push( new Vertex( [Math.sin(deg2rad(ang)), 1, Math.cos(deg2rad(ang))] ));
 
@@ -73,7 +80,7 @@ function CreateSurfaceData(data)
         {
             let v1ind = v0ind - 72 -1;
             let v2ind = v0ind - 1;
-            let v3ind = v0ind - 72
+            let v3ind = v0ind - 72;
 
             let trian = new Triangle(v0ind, v1ind, v2ind);
             let trianInd = triangles.length;
