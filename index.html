@@ -1,31 +1,53 @@
 <!DOCTYPE html>
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PA#2 (Variant 18)</title>
 
-
-<title>PA#1</title>
-<style>
-    body {
-        background-color: #EEEEEE;
+  <style>
+    body { background-color: #EEEEEE; font-family: Arial, sans-serif; }
+    .panel {
+      width: 600px;
+      margin: 10px 0;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #ccc;
     }
-</style>
+    .row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+    .row label { width: 120px; }
+    input[type="range"] { width: 320px; }
+    #canvas-holder { width: 600px; }
+  </style>
 
-<script src="./Utils/trackball-rotator.js"></script>
-<script src="./Utils/m4.js"></script>
-<script src="./shader.gpu"></script>
-<script src="./main.js"></script>
-
+  <script src="./Utils/trackball-rotator.js"></script>
+  <script src="./Utils/m4.js"></script>
+  <script src="./shader.gpu"></script>
+  <script src="./main.js"></script>
 </head>
+
 <body onload="init()">
+  <h2>PA#2 — Surface (Variant 18)</h2>
+  <p id="message">
+    Drag mouse to rotate.<br>
+    Use sliders to change U/V tessellation (granularity).
+  </p>
 
-<h2>A Cube with "Trackball" Mouse Rotation</h2>
+  <div class="panel">
+    <div class="row">
+      <label for="uSlider">U segments:</label>
+      <input id="uSlider" type="range" min="5" max="200" value="35" />
+      <span id="uVal">35</span>
+    </div>
 
-<p id="message">Drag your mouse on the cube to rotate it.<br>
-(On a touch screen, you can use your finger.)</p>
+    <div class="row">
+      <label for="vSlider">V segments:</label>
+      <input id="vSlider" type="range" min="5" max="200" value="45" />
+      <span id="vVal">45</span>
+    </div>
+  </div>
 
-
-<div id="canvas-holder">
-   <canvas width="600" height="600" id="webglcanvas" style="background-color:red"></canvas>
-</div>
-
-
-</body></html>
+  <div id="canvas-holder">
+    <canvas width="600" height="600" id="webglcanvas" style="background-color: black"></canvas>
+  </div>
+</body>
+</html>
