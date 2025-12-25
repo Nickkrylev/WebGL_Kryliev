@@ -1,24 +1,60 @@
+// shader.gpu (PA2, вариант 18: Gouraud + analytic normals)
 
-
-// Vertex shader
+// Vertex shader (Gouraud: свет считаем здесь)
 const vertexShaderSource = `
-attribute vec3 vertex;
-uniform mat4 ModelViewProjectionMatrix;
+attribute vec3 aPosition;
+attribute vec3 aNormal;
+
+uniform mat4 uModelView;
+uniform mat4 uProjection;
+uniform mat3 uNormalMatrix;
+
+uniform vec3 uLightPosView;   // позиция лампы уже в view-space
+uniform float uShininess;
+
+varying vec3 vColor;
 
 void main() {
-    gl_Position = ModelViewProjectionMatrix * vec4(vertex,1.0);
-}`;
+    // позиция вершины в view-space
+    vec3 P = (uModelView * vec4(aPosition, 1.0)).xyz;
 
+    // нормаль в view-space
+    vec3 N = normalize(uNormalMatrix * aNormal);
 
-// Fragment shader
+    // вектор на свет
+    vec3 L = normalize(uLightPosView - P);
+
+    // вектор на наблюдателя (как в подсказке можно фиксировать)
+    vec3 V = vec3(0.0, 0.0, 1.0);
+
+    // отраженный вектор
+    vec3 R = reflect(-L, N);
+
+    // коэффициенты материала (можно менять)
+    vec3 ambient = vec3(0.15);
+    vec3 kd = vec3(0.85, 0.85, 0.20); // слегка "желтоватый" как в PA1
+    vec3 ks = vec3(0.60);
+
+    float diff = max(dot(N, L), 0.0);
+    float spec = pow(max(dot(R, V), 0.0), uShininess);
+
+    vColor = ambient + kd * diff + ks * spec;
+
+    gl_Position = uProjection * vec4(P, 1.0);
+}
+`;
+
+// Fragment shader (только выводим интерполированный цвет)
 const fragmentShaderSource = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
-   precision highp float;
+precision highp float;
 #else
-   precision mediump float;
+precision mediump float;
 #endif
 
-uniform vec4 color;
+varying vec3 vColor;
+
 void main() {
-    gl_FragColor = color;
-}`;
+    gl_FragColor = vec4(vColor, 1.0);
+}
+`;
