@@ -1,5 +1,3 @@
-// shader.gpu (PA3, Variant 18: prioritize normal)
-
 // Vertex shader
 const vertexShaderSource = `
 attribute vec3 vertex;
@@ -46,6 +44,10 @@ uniform sampler2D iTMU2; // normal map
 uniform vec3 LightPosView;
 uniform float Shininess;
 
+// CGW: rotation around pivot in UV
+uniform vec2 PivotUV;
+uniform float TexAngle;
+
 varying vec2 vTex;
 varying vec3 vPosView;
 varying vec3 vN;
@@ -53,19 +55,30 @@ varying vec3 vT;
 varying float vTw;
 
 void main() {
+    // ---- rotate UV around pivot ----
+    vec2 uv = vTex;
+    vec2 d = uv - PivotUV;
+
+    float c = cos(TexAngle);
+    float s = sin(TexAngle);
+
+    vec2 dr = vec2(
+      d.x * c - d.y * s,
+      d.x * s + d.y * c
+    );
+
+    uv = PivotUV + dr;
+    uv = clamp(uv, 0.0, 1.0);
+
+    // ---- normal mapping (TBN) ----
     vec3 N = normalize(vN);
     vec3 T = normalize(vT);
 
-    // Variant 18: prioritize normal => сохраняем N, ортогонализируем T относительно N
+    // prioritize normal: make T orthogonal to N
     T = normalize(T - N * dot(N, T));
-
-    // битангенс с учетом handedness
     vec3 B = normalize(cross(N, T)) * vTw;
 
-    // normal map: [0..1] -> [-1..1]
-    vec3 nTex = texture2D(iTMU2, vTex).xyz * 2.0 - 1.0;
-
-    // TBN (столбцы: T, B, N)
+    vec3 nTex = texture2D(iTMU2, uv).xyz * 2.0 - 1.0;
     mat3 TBN = mat3(T, B, N);
     vec3 Np = normalize(TBN * nTex);
 
@@ -76,12 +89,17 @@ void main() {
     float diff = max(dot(Np, L), 0.0);
     float spec = pow(max(dot(R, V), 0.0), Shininess);
 
-    vec3 kd = texture2D(iTMU0, vTex).rgb;
-    vec3 ks = texture2D(iTMU1, vTex).rgb;
+    vec3 kd = texture2D(iTMU0, uv).rgb;
+    vec3 ks = texture2D(iTMU1, uv).rgb;
 
     vec3 ambient = 0.15 * kd;
-
     vec3 color = ambient + kd * diff + ks * spec;
+
+    // ---- draw pivot marker (red dot) ----
+    float dist = distance(uv, PivotUV);
+    if (dist < 0.015) {
+      color = mix(color, vec3(1.0, 0.2, 0.2), 0.9);
+    }
 
     gl_FragColor = vec4(color, 1.0);
 }

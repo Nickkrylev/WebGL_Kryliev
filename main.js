@@ -11,16 +11,45 @@ let vSeg = 45;
 let lightAngle = 0;
 let lastT = 0;
 
+// CGW Variant 18: pivot + rotation
+let pivotU = 0.5;
+let pivotV = 0.5;
+let texAngle = 0.0;
+
+const pivotStep = 0.02;
+const angleStep = 0.15;
+
+function clamp01(x) {
+  return Math.max(0.0, Math.min(1.0, x));
+}
+
+function setupKeyboard() {
+  window.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+
+    // move pivot
+    if (k === 'a') pivotU -= pivotStep;
+    if (k === 'd') pivotU += pivotStep;
+    if (k === 'w') pivotV += pivotStep;
+    if (k === 's') pivotV -= pivotStep;
+
+    // rotate texture (for demo)
+    if (k === 'q') texAngle -= angleStep;
+    if (k === 'e') texAngle += angleStep;
+
+    pivotU = clamp01(pivotU);
+    pivotV = clamp01(pivotV);
+  });
+}
+
 function ShaderProgram(name, program) {
   this.name = name;
   this.prog = program;
-
 
   this.iAttribVertex = -1;
   this.iAttribTexCoords = -1;
   this.iAttribNormal = -1;
   this.iAttribTangent = -1;
-
 
   this.iModelViewProjectionMatrix = -1;
   this.iModelViewMatrix = -1;
@@ -32,6 +61,10 @@ function ShaderProgram(name, program) {
 
   this.iLightPosView = -1;
   this.iShininess = -1;
+
+  // CGW uniforms
+  this.iPivotUV = -1;
+  this.iTexAngle = -1;
 
   this.Use = function () {
     gl.useProgram(this.prog);
@@ -62,7 +95,7 @@ function drawFrame(t) {
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  const projection = m4.perspective(Math.PI / 8, 1, 8, 12);
+  const projection = m4.perspective(Math.PI / 8, 1, 0.1, 50);
   const modelView0 = spaceball.getViewMatrix();
 
   const rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0.7);
@@ -77,6 +110,7 @@ function drawFrame(t) {
   gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
   gl.uniformMatrix3fv(shProgram.iNormalMatrix, false, normalMatrixFromModelView(matAccum1));
 
+  // rotating light
   lightAngle += dt * 0.8;
   const R = 3.0;
   const H = 1.0;
@@ -86,9 +120,14 @@ function drawFrame(t) {
   gl.uniform3f(shProgram.iLightPosView, lightView4[0], lightView4[1], lightView4[2]);
   gl.uniform1f(shProgram.iShininess, 32.0);
 
+  // texture units
   gl.uniform1i(shProgram.iTMU0, 0);
   gl.uniform1i(shProgram.iTMU1, 1);
   gl.uniform1i(shProgram.iTMU2, 2);
+
+  // CGW uniforms
+  gl.uniform2f(shProgram.iPivotUV, pivotU, pivotV);
+  gl.uniform1f(shProgram.iTexAngle, texAngle);
 
   surface.Draw();
 
@@ -117,6 +156,10 @@ function initGL() {
   shProgram.iLightPosView = gl.getUniformLocation(prog, 'LightPosView');
   shProgram.iShininess = gl.getUniformLocation(prog, 'Shininess');
 
+  // CGW uniforms
+  shProgram.iPivotUV = gl.getUniformLocation(prog, 'PivotUV');
+  shProgram.iTexAngle = gl.getUniformLocation(prog, 'TexAngle');
+
   const data = {};
   CreateSurfaceData(data, uSeg, vSeg);
 
@@ -129,7 +172,6 @@ function initGL() {
     data.tangentsF32
   );
 
-  // три структури
   surface.idTextureDiffuse = LoadTexture('./textures/diffuse.jpg');
   surface.idTextureSpecular = LoadTexture('./textures/specular.jpg');
   surface.idTextureNormal = LoadTexture('./textures/normal.jpg');
@@ -199,12 +241,9 @@ function setupSliders() {
 }
 
 function init() {
-  let canvas;
-  try {
-    canvas = document.getElementById('webglcanvas');
-    gl = canvas.getContext('webgl');
-    if (!gl) throw 'Browser does not support WebGL';
-  } catch (e) {
+  const canvas = document.getElementById('webglcanvas');
+  gl = canvas.getContext('webgl');
+  if (!gl) {
     document.getElementById('canvas-holder').innerHTML =
       '<p>Sorry, could not get a WebGL graphics context.</p>';
     return;
@@ -214,12 +253,13 @@ function init() {
     initGL();
   } catch (e) {
     document.getElementById('canvas-holder').innerHTML =
-      '<p>Sorry, could not initialize the WebGL graphics context: ' + e + '</p>';
+      '<p>Sorry, could not initialize WebGL: ' + e + '</p>';
     return;
   }
 
   spaceball = new TrackballRotator(canvas, () => {}, 0);
   setupSliders();
+  setupKeyboard();
 
   requestAnimationFrame(drawFrame);
 }

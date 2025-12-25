@@ -1,33 +1,54 @@
 <!DOCTYPE html>
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PA#3 — Texturing + Normal Mapping (Variant 18)</title>
+  <style>
+    body { background:#eee; font-family: Arial, sans-serif; }
+    #canvas-holder { margin-top: 10px; }
+    canvas { background:#222; border: 1px solid #aaa; }
+    .panel { margin: 10px 0; padding: 10px; background: #fff; border: 1px solid #ccc; width: 600px; }
+    .row { display:flex; align-items:center; gap:10px; margin: 6px 0; }
+    .row label { min-width: 110px; }
+    .row input[type="range"] { flex: 1; }
+    code { background: #f2f2f2; padding: 2px 4px; }
+  </style>
 
+  <script src="./Utils/trackball-rotator.js"></script>
+  <script src="./Utils/m4.js"></script>
 
-<title>PA#1</title>
-<style>
-    body {
-        background-color: #EEEEEE;
-    }
-</style>
-
-<script src="./Utils/trackball-rotator.js"></script>
-<script src="./Utils/m4.js"></script>
-<script src="./shader.gpu"></script>
-<script src="./Model.js"></script>
-<script src="./TextureHandler.js"></script>
-<script src="./main.js"></script>
-
+  <script src="./shader.gpu"></script>
+  <script src="./Model.js"></script>
+  <script src="./TextureHandler.js"></script>
+  <script src="./main.js"></script>
 </head>
+
 <body onload="init()">
+  <h2> Calculation and graphics work — Texturing + Normal Mapping (Variant 18, Sievert surface)</h2>
 
-<h2>PA#3 — Texturing + Normal Mapping (Variant 18, Sievert surface)</h2>
+  <div class="panel">
+    <div>
+      <b>Controls:</b><br>
+      Rotate model: mouse drag<br>
+      Pivot move: <code>A/D</code> (U), <code>W/S</code> (V)<br>
+      Texture rotation: <code>Q/E</code>
+    </div>
 
-<p id="message">Drag your mouse on the cube to rotate it.<br>
-(On a touch screen, you can use your finger.)</p>
+    <div class="row">
+      <label>u segments:</label>
+      <input id="uSlider" type="range" min="10" max="120" step="1" />
+      <span id="uVal"></span>
+    </div>
 
+    <div class="row">
+      <label>v segments:</label>
+      <input id="vSlider" type="range" min="10" max="160" step="1" />
+      <span id="vVal"></span>
+    </div>
+  </div>
 
-<div id="canvas-holder">
-   <canvas width="600" height="600" id="webglcanvas" style="background-color:red"></canvas>
-</div>
-
-
-</body></html>
+  <div id="canvas-holder">
+    <canvas width="600" height="600" id="webglcanvas"></canvas>
+  </div>
+</body>
+</html>

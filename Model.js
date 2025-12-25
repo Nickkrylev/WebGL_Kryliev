@@ -1,4 +1,3 @@
-
 function dot3(a, b) {
   return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
 }
@@ -16,6 +15,7 @@ function normalize3(v) {
   return [v[0]/len, v[1]/len, v[2]/len];
 }
 
+// ===== Dual numbers for autodiff (u,v) =====
 class Dual2 {
   constructor(v, du=0, dv=0) { this.v=v; this.du=du; this.dv=dv; }
   static U(x) { return new Dual2(x, 1, 0); }
@@ -46,6 +46,7 @@ function dLog(a){
   return new Dual2(Math.log(x), a.du/x, a.dv/x);
 }
 
+// ===== Sievert surface point + partial derivatives =====
 function sievertPointDual(u, v) {
   const C = 1.0;
   const sqrtC = Math.sqrt(C);
@@ -84,12 +85,13 @@ function sievertPointDual(u, v) {
 
   const s = 0.8;
   return {
-    p: [s*x.v, s*y.v, s*z.v],
+    p:  [s*x.v,  s*y.v,  s*z.v],
     Su: [s*x.du, s*y.du, s*z.du],
     Sv: [s*x.dv, s*y.dv, s*z.dv],
   };
 }
 
+// ===== WebGL Model =====
 function Model(name) {
   this.name = name;
 
@@ -155,9 +157,10 @@ function Model(name) {
   };
 }
 
+// ===== Mesh generation for Sievert surface =====
 function CreateSurfaceData(data, uSteps, vSteps) {
   const uMin = -1.5;
-  const uMax = 1.5;
+  const uMax =  1.5;
   const vMin = 0.05;
   const vMax = Math.PI - 0.05;
 
@@ -180,12 +183,15 @@ function CreateSurfaceData(data, uSteps, vSteps) {
       const res = sievertPointDual(Dual2.U(uVal), Dual2.V(vVal));
 
       const N = normalize3(cross3(res.Su, res.Sv));
-
-    
       const Traw = normalize3(res.Su);
 
+      // Gram-Schmidt: make T orthogonal to N
       const proj = dot3(N, Traw);
-      const Tgs = normalize3([Traw[0] - N[0]*proj, Traw[1] - N[1]*proj, Traw[2] - N[2]*proj]);
+      const Tgs = normalize3([
+        Traw[0] - N[0]*proj,
+        Traw[1] - N[1]*proj,
+        Traw[2] - N[2]*proj
+      ]);
 
       const Btest = cross3(N, Tgs);
       const handedness = (dot3(Btest, res.Sv) < 0.0) ? -1.0 : 1.0;
@@ -211,9 +217,9 @@ function CreateSurfaceData(data, uSteps, vSteps) {
     }
   }
 
-  data.verticesF32 = new Float32Array(positions);
+  data.verticesF32  = new Float32Array(positions);
   data.texcoordsF32 = new Float32Array(texcoords);
-  data.normalsF32 = new Float32Array(normals);
-  data.tangentsF32 = new Float32Array(tangents);
-  data.indicesU16 = new Uint16Array(indices);
+  data.normalsF32   = new Float32Array(normals);
+  data.tangentsF32  = new Float32Array(tangents);
+  data.indicesU16   = new Uint16Array(indices);
 }
